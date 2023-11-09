@@ -8,7 +8,6 @@ from torch.utils import data
 from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from torchvision.models import MobileNet_V3_Small_Weights
 
 EPOCHS = 20
 
@@ -101,10 +100,10 @@ train_loader = data.DataLoader(train_img, batch_size=32, shuffle=True)
 test_loader = data.DataLoader(test_img, batch_size=60, shuffle=True)
 # print(train_img, '\n-----------\n', train_img.classes, train_img.class_to_idx)
 
-net = models.mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.DEFAULT)
+net = models.in(weights=models.VGG16_Weights.DEFAULT)
 for p in net.features.parameters():
     p.requires_grad = False
-net.classifier[3] = nn.Linear(1024, 2)
+net.classifier[6] = nn.Linear(4096, 2)
 # print(net)
 # sys.exit()
 

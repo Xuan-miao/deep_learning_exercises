@@ -8,7 +8,6 @@ from torch.utils import data
 from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from torchvision.models import MobileNet_V3_Small_Weights
 
 EPOCHS = 20
 
@@ -63,7 +62,7 @@ def train_net(model, train_iter, test_iter, only_fc=True,
     train_acc = []
     test_acc = []
     if only_fc:
-        optimizer = optimizer_cls(model.classifier.parameters())
+        optimizer = optimizer_cls(model.fc.parameters())
     else:
         optimizer = optimizer_cls(model.parameters())
     for epoch in range(epochs):
@@ -90,21 +89,21 @@ def train_net(model, train_iter, test_iter, only_fc=True,
 
 
 train_aug = transforms.Compose(
-    [transforms.RandomCrop(224), transforms.ToTensor(),
+    [transforms.Resize(224), transforms.ToTensor(),
      transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0, hue=0),
      transforms.RandomHorizontalFlip()])
 test_aug = transforms.Compose(
-    [transforms.RandomCrop(224), transforms.ToTensor()])
+    [transforms.Resize(224), transforms.ToTensor()])
 train_img = ImageFolder('C:/data/taco_and_burrito/train', transform=train_aug)
 test_img = ImageFolder('C:/data/taco_and_burrito/test', transform=test_aug)
 train_loader = data.DataLoader(train_img, batch_size=32, shuffle=True)
 test_loader = data.DataLoader(test_img, batch_size=60, shuffle=True)
 # print(train_img, '\n-----------\n', train_img.classes, train_img.class_to_idx)
 
-net = models.mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.DEFAULT)
-for p in net.features.parameters():
+net = models.inception_v3(weights=models.Inception_V3_Weights.DEFAULT)
+for p in net.parameters():
     p.requires_grad = False
-net.classifier[3] = nn.Linear(1024, 2)
+net.fc = nn.Linear(2048, 2)
 # print(net)
 # sys.exit()
 
