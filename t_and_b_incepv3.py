@@ -2,12 +2,14 @@ import sys
 
 import torch
 import matplotlib.pyplot as plt
+import torchvision.models
 
 from torch import nn
 from torch.utils import data
 from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
+from torchvision.models import Inception_V3_Weights
 
 EPOCHS = 20
 
@@ -71,7 +73,7 @@ def train_net(model, train_iter, test_iter, only_fc=True,
         for i, (xx, yy) in enumerate(train_iter):
             xx = xx.to(device)
             yy = yy.to(device)
-            yy_hat = model(xx)
+            yy_hat, _ = model(xx)
             loss = loss_fn(yy_hat, yy)
             # loss = nn.CrossEntropyLoss()(yy_hat, yy)
             optimizer.zero_grad()
@@ -89,18 +91,18 @@ def train_net(model, train_iter, test_iter, only_fc=True,
 
 
 train_aug = transforms.Compose(
-    [transforms.Resize(224), transforms.ToTensor(),
+    [transforms.Resize(299), transforms.RandomCrop(299), transforms.ToTensor(),
      transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0, hue=0),
      transforms.RandomHorizontalFlip()])
 test_aug = transforms.Compose(
-    [transforms.Resize(224), transforms.ToTensor()])
+    [transforms.Resize(299), transforms.RandomCrop(299), transforms.ToTensor()])
 train_img = ImageFolder('C:/data/taco_and_burrito/train', transform=train_aug)
 test_img = ImageFolder('C:/data/taco_and_burrito/test', transform=test_aug)
 train_loader = data.DataLoader(train_img, batch_size=32, shuffle=True)
 test_loader = data.DataLoader(test_img, batch_size=60, shuffle=True)
 # print(train_img, '\n-----------\n', train_img.classes, train_img.class_to_idx)
 
-net = models.inception_v3(weights=models.Inception_V3_Weights.DEFAULT)
+net = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
 for p in net.parameters():
     p.requires_grad = False
 net.fc = nn.Linear(2048, 2)

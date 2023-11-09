@@ -9,8 +9,6 @@ from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 
-import xception
-
 EPOCHS = 20
 
 
@@ -93,6 +91,7 @@ def train_net(model, train_iter, test_iter, only_fc=True,
 train_aug = transforms.Compose(
     [transforms.RandomCrop(224), transforms.ToTensor(),
      transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0, hue=0),
+
      transforms.RandomHorizontalFlip()])
 test_aug = transforms.Compose(
     [transforms.RandomCrop(224), transforms.ToTensor()])
@@ -102,7 +101,7 @@ train_loader = data.DataLoader(train_img, batch_size=32, shuffle=True)
 test_loader = data.DataLoader(test_img, batch_size=60, shuffle=True)
 # print(train_img, '\n-----------\n', train_img.classes, train_img.class_to_idx)
 
-net = xception.xception_65(num_classes=2, pretrained=True)
+net = models.vgg19(weights=models.VGG19_Weights.DEFAULT)
 for p in net.features.parameters():
     p.requires_grad = False
 net.classifier[6] = nn.Linear(4096, 2)
