@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 .idea
 model_weights.pth
+demo.py

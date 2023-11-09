@@ -1,3 +1,5 @@
+import sys
+
 import torch
 import matplotlib.pyplot as plt
 
@@ -7,6 +9,8 @@ from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.models import ResNet50_Weights
+
+EPOCHS = 20
 
 
 class Metrics:
@@ -29,7 +33,7 @@ def draw(x, y, label):
     plt.show()
 
 
-def eval_net(model, data_loader, device='cpu'):
+def eval_net(model, data_loader, epoch, device='cpu'):
     model.eval()
     metrics = Metrics(2)
     for xx, yy in data_loader:
@@ -38,6 +42,16 @@ def eval_net(model, data_loader, device='cpu'):
         with torch.no_grad():
             yy_hat = net(xx).max(1).indices
         r = sum(yy == yy_hat)
+        pred_pos = sum(yy_hat == 1)
+        tp = sum(yy_hat * yy)
+        fp = pred_pos - tp
+        fn = 30 - tp
+        P = tp / pred_pos
+        R = tp / (tp + fn)
+        f1 = 2 * P * R / (P + R)
+        if epoch == EPOCHS - 1:
+            print(f'yy---- {yy}\nyy_hat {yy_hat}\nyy*hat {yy * yy_hat}\n'
+                  f'precision {P:f}, recall {R:f}, f1 {f1:f}')
         metrics.mark(r, len(yy))
     return metrics[0] / metrics[1]
 
@@ -68,18 +82,23 @@ def train_net(model, train_iter, test_iter, only_fc=True,
             metrics.mark(loss.item(), r, len(yy))
         train_loss.append(metrics[0] / i)
         train_acc.append(metrics[1] / metrics[2])
-        test_acc.append(eval_net(model, test_iter, device))
+        test_acc.append(eval_net(model, test_iter, epoch, device))
         print(f'Epoch {epoch + 1}, train_loss {train_loss[-1]:f},'
               f'train_acc {train_acc[-1]:f}, test_acc {test_acc[-1]:f}')
     draw(epochs, [train_loss, train_acc, test_acc],
          ['train_loss', 'train_acc', 'test_acc'])
 
 
-trans = transforms.Compose([transforms.RandomCrop(224), transforms.ToTensor()])
-train_img = ImageFolder('C:/data/taco_and_burrito/train', transform=trans)
-test_img = ImageFolder('C:/data/taco_and_burrito/test', transform=trans)
+train_aug = transforms.Compose(
+    [transforms.RandomCrop(224), transforms.ToTensor(),
+     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0),
+     transforms.RandomHorizontalFlip()])
+test_aug = transforms.Compose(
+    [transforms.RandomCrop(224), transforms.ToTensor()])
+train_img = ImageFolder('C:/data/taco_and_burrito/train', transform=train_aug)
+test_img = ImageFolder('C:/data/taco_and_burrito/test', transform=test_aug)
 train_loader = data.DataLoader(train_img, batch_size=32, shuffle=True)
-test_loader = data.DataLoader(test_img, batch_size=32, shuffle=True)
+test_loader = data.DataLoader(test_img, batch_size=60, shuffle=True)
 # print(train_img, '\n-----------\n', train_img.classes, train_img.class_to_idx)
 
 # net = models.resnet18(pretrained=True)
@@ -103,4 +122,4 @@ net.fc = nn.Linear(fc_input_dim, 2)
 # # sys.exit()
 
 net.to('cuda:0')
-train_net(net, train_loader, test_loader, epochs=20, device='cuda:0')
+train_net(net, train_loader, test_loader, epochs=EPOCHS, device='cuda:0')
