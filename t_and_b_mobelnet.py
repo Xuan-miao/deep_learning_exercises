@@ -8,7 +8,7 @@ from torch.utils import data
 from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from torchvision.models import ResNet50_Weights
+from torchvision.models import MobileNet_V3_Small_Weights
 
 EPOCHS = 20
 
@@ -50,8 +50,8 @@ def eval_net(model, data_loader, epoch, device='cpu'):
         R = tp / (tp + fn)
         f1 = 2 * P * R / (P + R)
         if epoch == EPOCHS - 1:
-            print(f'yy---- {yy}\nyy_hat {yy_hat}\nyy*hat {yy * yy_hat}\n'
-                  f'precision {P:f}, recall {R:f}, f1 {f1:f}')
+            # print(f'yy---- {yy}\nyy_hat {yy_hat}\nyy*hat {yy * yy_hat}')
+            print(f'precision {P:f}, recall {R:f}, f1 {f1:f}')
         metrics.mark(r, len(yy))
     return metrics[0] / metrics[1]
 
@@ -63,7 +63,7 @@ def train_net(model, train_iter, test_iter, only_fc=True,
     train_acc = []
     test_acc = []
     if only_fc:
-        optimizer = optimizer_cls(model.fc.parameters())
+        optimizer = optimizer_cls(model.classifier.parameters())
     else:
         optimizer = optimizer_cls(model.parameters())
     for epoch in range(epochs):
@@ -83,7 +83,7 @@ def train_net(model, train_iter, test_iter, only_fc=True,
         train_loss.append(metrics[0] / i)
         train_acc.append(metrics[1] / metrics[2])
         test_acc.append(eval_net(model, test_iter, epoch, device))
-        print(f'Epoch {epoch + 1}, train_loss {train_loss[-1]:f},'
+        print(f'Epoch {epoch + 1}, train_loss {train_loss[-1]:f} ,'
               f'train_acc {train_acc[-1]:f}, test_acc {test_acc[-1]:f}')
     draw(epochs, [train_loss, train_acc, test_acc],
          ['train_loss', 'train_acc', 'test_acc'])
@@ -91,7 +91,7 @@ def train_net(model, train_iter, test_iter, only_fc=True,
 
 train_aug = transforms.Compose(
     [transforms.RandomCrop(224), transforms.ToTensor(),
-     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0),
+     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0, hue=0),
      transforms.RandomHorizontalFlip()])
 test_aug = transforms.Compose(
     [transforms.RandomCrop(224), transforms.ToTensor()])
@@ -101,25 +101,13 @@ train_loader = data.DataLoader(train_img, batch_size=32, shuffle=True)
 test_loader = data.DataLoader(test_img, batch_size=60, shuffle=True)
 # print(train_img, '\n-----------\n', train_img.classes, train_img.class_to_idx)
 
-# net = models.resnet18(pretrained=True)
-net = models.resnet50(weights=ResNet50_Weights.DEFAULT)
-# print(net)
-# sys.exit()
-for p in net.parameters():
+net = models.mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.DEFAULT)
+for p in net.features.parameters():
     p.requires_grad = False
-fc_input_dim = net.fc.in_features
-net.fc = nn.Linear(fc_input_dim, 2)
-# print(net)
-#
-# x, y = next(iter(test_loader))
-# h = net(x)
-# print(h)
-# print(x.shape, y.shape)
-# print(y[:10])
-# plt.imshow(x[1].permute(1, 2, 0))
-# # plt.imshow(torch.einsum('ijk->jki', x[1]))
-# plt.show()
-# # sys.exit()
+net.classifier[3] = nn.Linear(4096, 2)
+print(net)
+# sys.exit()
 
 net.to('cuda:0')
 train_net(net, train_loader, test_loader, epochs=EPOCHS, device='cuda:0')
+# torch.save(net.state_dict(), 'vgg16_weights.pth')
