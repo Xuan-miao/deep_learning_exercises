@@ -105,7 +105,7 @@ net = models.mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.DEFAULT)
 for p in net.features.parameters():
     p.requires_grad = False
 net.classifier[3] = nn.Linear(1024, 2)
-# print(net)
+print(net)
 # sys.exit()
 
 net.to('cuda:0')

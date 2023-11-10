@@ -9,7 +9,7 @@ from torchvision import models
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 
-import xception
+from xception2 import xception
 
 EPOCHS = 20
 
@@ -102,13 +102,13 @@ train_loader = data.DataLoader(train_img, batch_size=32, shuffle=True)
 test_loader = data.DataLoader(test_img, batch_size=60, shuffle=True)
 # print(train_img, '\n-----------\n', train_img.classes, train_img.class_to_idx)
 
-net = xception.xception_65(num_classes=2, pretrained=True)
+net = xception(pretrained=True)
 for p in net.features.parameters():
     p.requires_grad = False
 net.classifier[6] = nn.Linear(4096, 2)
-# print(net)
+print(net)
 # sys.exit()
 
 net.to('cuda:0')
-train_net(net, train_loader, test_loader, epochs=EPOCHS, device='cuda:0')
+# train_net(net, train_loader, test_loader, epochs=EPOCHS, device='cuda:0')
 # torch.save(net.state_dict(), 'vgg16_weights.pth')

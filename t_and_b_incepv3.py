@@ -106,7 +106,7 @@ net = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
 for p in net.parameters():
     p.requires_grad = False
 net.fc = nn.Linear(2048, 2)
-# print(net)
+print(net)
 # sys.exit()
 
 net.to('cuda:0')

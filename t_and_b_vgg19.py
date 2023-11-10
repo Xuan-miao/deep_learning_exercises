@@ -105,7 +105,7 @@ net = models.vgg19(weights=models.VGG19_Weights.DEFAULT)
 for p in net.features.parameters():
     p.requires_grad = False
 net.classifier[6] = nn.Linear(4096, 2)
-# print(net)
+print(net)
 # sys.exit()
 
 net.to('cuda:0')

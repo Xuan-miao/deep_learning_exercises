@@ -124,5 +124,5 @@ print(net)
 # # sys.exit()
 
 net.to('cuda:0')
-# train_net(net, train_loader, test_loader, epochs=EPOCHS, device='cuda:0')
+train_net(net, train_loader, test_loader, epochs=EPOCHS, device='cuda:0')
 # torch.save(net.state_dict(), 'model_weights.pth')
